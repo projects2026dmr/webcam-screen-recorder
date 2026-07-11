@@ -56,7 +56,7 @@ const LibrarySection = forwardRef<HTMLElement, LibrarySectionProps>(
 
     const handleDownload = (item: LibraryItem) => {
       // Always require auth for download
-      onRequireAuth(() => onDownload(item));
+      onDownload(item);
     };
 
     return (
