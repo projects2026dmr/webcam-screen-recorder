@@ -67,7 +67,7 @@ const LibrarySection = forwardRef<HTMLElement, LibrarySectionProps>(
               My Recordings
             </h2>
             <p className="text-lg text-slate-400">
-              Your recordings are stored locally. Sign in with Google to download.
+              Your recordings are stored locally. You can download them anytime.
             </p>
           </div>
 
