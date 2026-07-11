@@ -92,10 +92,10 @@ const QUALITY_DIMENSIONS: Record<QualityPreset, { width: number; height: number 
 };
 
 const BITRATE_BASE: Record<QualityPreset, number> = {
-  '720p': 2500000,
-  '1080p': 5000000,
-  '1440p': 8000000,
-  '4k': 15000000,
+  '720p': 4000000,
+  '1080p': 8000000,
+  '1440p': 12000000,
+  '4k': 20000000,
   'original': 8000000,
 };
 
@@ -134,7 +134,7 @@ export function useRecorder(): UseRecorderReturn {
   const [selectedWebcam, setSelectedWebcam] = useState('');
   const [selectedMicrophone, setSelectedMicrophone] = useState('');
   const [selectedQuality, setSelectedQuality] = useState<QualityPreset>('1080p');
-  const [selectedBitrate, setSelectedBitrate] = useState<BitratePreset>('medium');
+  const [selectedBitrate, setSelectedBitrate] = useState<BitratePreset>('high');
   const [selectedMode, setSelectedMode] = useState<RecordingMode>('screen');
   const [webcamPosition, setWebcamPosition] = useState<WebcamPosition>('bottom-right');
   const [webcamSize, setWebcamSize] = useState<WebcamSize>('medium');
@@ -866,61 +866,101 @@ export function useRecorder(): UseRecorderReturn {
       // ----------------------------------------
       // STEP 8: Set Up Audio Mixing
       // ----------------------------------------
-      let finalStream: MediaStream;
-
-      try {
-        const audioCtx = new AudioContext();
-        audioContextRef.current = audioCtx;
-
-        const destination = audioCtx.createMediaStreamDestination();
-        audioDestinationRef.current = destination;
-
-        // Connect screen audio if available
-        if (screenStreamRef.current) {
-          const screenAudioTracks = screenStreamRef.current.getAudioTracks();
-          if (screenAudioTracks.length > 0) {
-            const screenAudioStream = new MediaStream(screenAudioTracks);
-            const screenSource = audioCtx.createMediaStreamSource(screenAudioStream);
-            screenSource.connect(destination);
-            console.log('[Recorder] Screen audio connected');
-          }
-        }
-
-        // Connect microphone audio if available
-        if (micStream) {
-          const micSource = audioCtx.createMediaStreamSource(micStream);
-          micSource.connect(destination);
-          console.log('[Recorder] Microphone audio connected');
-        }
-
-        // Create final stream: canvas video + mixed audio
-        const canvasStream = canvas.captureStream(30);
-        finalStream = new MediaStream([
-          ...canvasStream.getVideoTracks(),
-          ...destination.stream.getAudioTracks(),
-        ]);
-
-        console.log('[Recorder] Final stream tracks:', finalStream.getTracks().length);
-
-      } catch (audioError) {
-        // Fallback: direct track assignment without AudioContext
-        console.warn('[Recorder] AudioContext setup failed, using fallback:', audioError);
-
-        const canvasStream = canvas.captureStream(30);
-        const audioTracks: MediaStreamTrack[] = [];
-
-        if (screenStreamRef.current) {
-          audioTracks.push(...screenStreamRef.current.getAudioTracks());
-        }
-        if (micStream) {
-          audioTracks.push(...micStream.getAudioTracks());
-        }
-
-        finalStream = new MediaStream([
-          ...canvasStream.getVideoTracks(),
-          ...audioTracks,
-        ]);
+.createMediaStreamSource(screenAudioStream);
+        screenSource.connect(destination);
+        console.log('[Recorder] Screen audio connected');
       }
+    }
+
+    // Mic audio
+    if (micStream) {
+      const micSource = audioCtx.createMediaStreamSource(micStream);
+      micSource.connect(destination);
+      console.log('[Recorder] Microphone audio connected');
+    }
+
+    // FINAL STREAM: screen video + mixed audio
+    const videoTracks = screenStreamRef.current
+      ? screenStreamRef.current.getVideoTracks()
+      : [];
+
+    finalStream = new MediaStream([
+      ...videoTracks,
+      ...destination.stream.getAudioTracks(),
+    ]);
+    console.log('[Recorder] Final stream (screen mode) tracks:', finalStream.getTracks().length);
+
+  } catch (audioError) {
+    console.warn('[Recorder] AudioContext setup failed (screen mode), using fallback:', audioError);
+
+    const videoTracks = screenStreamRef.current
+      ? screenStreamRef.current.getVideoTracks()
+      : [];
+    const audioTracks: MediaStreamTrack[] = [];
+
+    if (screenStreamRef.current) {
+      audioTracks.push(...screenStreamRef.current.getAudioTracks());
+    }
+    if (micStream) {
+      audioTracks.push(...(micStream?.getAudioTracks() || []));
+    }
+
+    finalStream = new MediaStream([
+      ...videoTracks,
+      ...audioTracks,
+    ]);
+  }
+} else {
+  // --- WEBKAM / SCREEN+WEBCAM: mevcut canvas yolu ---
+  try {
+    const audioCtx = new AudioContext();
+    audioContextRef.current = audioCtx;
+
+    const destination = audioCtx.createMediaStreamDestination();
+    audioDestinationRef.current = destination;
+
+    if (screenStreamRef.current) {
+      const screenAudioTracks = screenStreamRef.current.getAudioTracks();
+      if (screenAudioTracks.length > 0) {
+        const screenAudioStream = new MediaStream(screenAudioTracks);
+        const screenSource = audioCtx.createMediaStreamSource(screenAudioStream);
+        screenSource.connect(destination);
+        console.log('[Recorder] Screen audio connected');
+      }
+    }
+
+    if (micStream) {
+      const micSource = audioCtx.createMediaStreamSource(micStream);
+      micSource.connect(destination);
+      console.log('[Recorder] Microphone audio connected');
+    }
+
+    const canvasStream = canvas.captureStream(30);
+    finalStream = new MediaStream([
+      ...canvasStream.getVideoTracks(),
+      ...destination.stream.getAudioTracks(),
+    ]);
+    console.log('[Recorder] Final stream tracks:', finalStream.getTracks().length);
+
+  } catch (audioError) {
+    console.warn('[Recorder] AudioContext setup failed, using fallback:', audioError);
+
+    const canvasStream = canvas.captureStream(30);
+    const audioTracks: MediaStreamTrack[] = [];
+
+    if (screenStreamRef.current) {
+      audioTracks.push(...screenStreamRef.current.getAudioTracks());
+    }
+    if (micStream) {
+      audioTracks.push(...(micStream?.getAudioTracks() || []));
+    }
+
+    finalStream = new MediaStream([
+      ...canvasStream.getVideoTracks(),
+      ...audioTracks,
+    ]);
+  }
+}
 
       // ----------------------------------------
       // STEP 9: Create and Start MediaRecorder
@@ -978,7 +1018,7 @@ export function useRecorder(): UseRecorderReturn {
       // ----------------------------------------
       // STEP 10: Start Recording
       // ----------------------------------------
-      mediaRecorder.start(1000); // Collect chunks every second
+      mediaRecorder.start(); // timeslice kullanma
       isRecordingRef.current = true;
       startTimeRef.current = Date.now();
       setState('recording');
