@@ -48,11 +48,6 @@ const faqs = [
       'Yes! Before you start recording, you can select your preferred microphone from a dropdown menu. Whether you\'re using a built-in laptop mic, USB microphone, wireless headset, or professional audio interface — our free screen recorder supports all audio input devices.',
   },
   {
-    question: 'Why is Google Sign-In required to download recordings?',
-    answer:
-      'We use Google Sign-In as a simple, secure authentication method to protect our free screen recording service and ensure quality for all users. Recording and previewing are completely free without any sign-in. You only need to authenticate with Google when you want to download your recorded videos.',
-  },
-  {
     question: 'What happens when I click "Stop Sharing" in Chrome or Edge?',
     answer:
       'When you stop sharing your screen via the browser\'s native "Stop Sharing" button (or click our Stop Recording button), the app automatically detects this event, stops the recording, and takes you directly to the preview screen where you can review, trim, save, or download your video.',
