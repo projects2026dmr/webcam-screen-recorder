@@ -863,21 +863,29 @@ export function useRecorder(): UseRecorderReturn {
         console.warn('[Recorder] Not enough frames drawn, may produce empty video');
       }
 
-      // ----------------------------------------
-      // STEP 8: Set Up Audio Mixing
-      // ----------------------------------------
-// Connect screen audio if available
-if (screenStreamRef.current) {
-  const screenAudioTracks = screenStreamRef.current.getAudioTracks();
-  if (screenAudioTracks.length > 0) {
-    const screenAudioStream = new MediaStream(screenAudioTracks);
+// ----------------------------------------
+// STEP 8: Set Up Audio Mixing
+// ----------------------------------------
+if (selectedMode === 'screen') {
+  try {
+    const audioCtx = new AudioContext();
+    audioContextRef.current = audioCtx;
 
-    const screenSource = audioCtx.createMediaStreamSource(screenAudioStream);
-    screenSource.connect(destination);
+    const destination = audioCtx.createMediaStreamDestination();
+    audioDestinationRef.current = destination;
 
-    console.log('[Recorder] Screen audio connected');
-  }
-}
+    // Connect screen audio if available
+    if (screenStreamRef.current) {
+      const screenAudioTracks = screenStreamRef.current.getAudioTracks();
+      if (screenAudioTracks.length > 0) {
+        const screenAudioStream = new MediaStream(screenAudioTracks);
+
+        const screenSource = audioCtx.createMediaStreamSource(screenAudioStream);
+        screenSource.connect(destination);
+
+        console.log('[Recorder] Screen audio connected');
+      }
+    }
 
     // Mic audio
     if (micStream) {
@@ -926,19 +934,17 @@ if (screenStreamRef.current) {
     const destination = audioCtx.createMediaStreamDestination();
     audioDestinationRef.current = destination;
 
-// Connect screen audio if available
-if (screenStreamRef.current) {
-  const screenAudioTracks = screenStreamRef.current.getAudioTracks();
-  if (screenAudioTracks.length > 0) {
-    const screenAudioStream = new MediaStream(screenAudioTracks);
+    // Connect screen audio if available
+    if (screenStreamRef.current) {
+      const screenAudioTracks = screenStreamRef.current.getAudioTracks();
+      if (screenAudioTracks.length > 0) {
+        const screenAudioStream = new MediaStream(screenAudioTracks);
 
-    // ✔ DOĞRU SATIR
-    const screenSource = audioCtx.createMediaStreamSource(screenAudioStream);
-
-    screenSource.connect(destination);
-    console.log('[Recorder] Screen audio connected');
-  }
-}
+        const screenSource = audioCtx.createMediaStreamSource(screenAudioStream);
+        screenSource.connect(destination);
+        console.log('[Recorder] Screen audio connected');
+      }
+    }
 
     if (micStream) {
       const micSource = audioCtx.createMediaStreamSource(micStream);
@@ -972,7 +978,6 @@ if (screenStreamRef.current) {
     ]);
   }
 }
-
       // ----------------------------------------
       // STEP 9: Create and Start MediaRecorder
       // ----------------------------------------
