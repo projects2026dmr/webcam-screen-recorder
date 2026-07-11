@@ -923,11 +923,12 @@ export function useRecorder(): UseRecorderReturn {
       const screenAudioTracks = screenStreamRef.current.getAudioTracks();
       if (screenAudioTracks.length > 0) {
         const screenAudioStream = new MediaStream(screenAudioTracks);
-        const screenSource = audioCtx.createMediaStreamSource(screenAudioStream);
-        screenSource.connect(destination);
-        console.log('[Recorder] Screen audio connected');
-      }
-    }
+    const screenSource = audioCtx.createMediaStreamSource(screenAudioStream);
+    screenSource.connect(destination);
+
+    console.log('[Recorder] Screen audio connected');
+  }
+}
 
     if (micStream) {
       const micSource = audioCtx.createMediaStreamSource(micStream);
