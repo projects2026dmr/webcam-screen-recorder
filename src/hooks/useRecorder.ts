@@ -866,11 +866,18 @@ export function useRecorder(): UseRecorderReturn {
       // ----------------------------------------
       // STEP 8: Set Up Audio Mixing
       // ----------------------------------------
-.createMediaStreamSource(screenAudioStream);
-        screenSource.connect(destination);
-        console.log('[Recorder] Screen audio connected');
-      }
-    }
+// Connect screen audio if available
+if (screenStreamRef.current) {
+  const screenAudioTracks = screenStreamRef.current.getAudioTracks();
+  if (screenAudioTracks.length > 0) {
+    const screenAudioStream = new MediaStream(screenAudioTracks);
+
+    const screenSource = audioCtx.createMediaStreamSource(screenAudioStream);
+    screenSource.connect(destination);
+
+    console.log('[Recorder] Screen audio connected');
+  }
+}
 
     // Mic audio
     if (micStream) {
