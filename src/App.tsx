@@ -15,7 +15,6 @@ import WhyCreatorsSection from './components/WhyCreatorsSection';
 import FAQSection from './components/FAQSection';
 import CTASection from './components/CTASection';
 import Footer from './components/Footer';
-import AuthModal from './components/AuthModal';
 import ToastContainer from './components/ToastContainer';
 
 import { useRecorder } from './hooks/useRecorder';
@@ -65,11 +64,7 @@ export default function App() {
         Skip to recorder
       </a>
 
-      <Header
-        user={auth.user}
-        onSignIn={() => auth.setShowAuthModal(true)}
-        onSignOut={auth.signOut}
-      />
+<Header user={auth.user} onSignOut={auth.signOut} />
 
       <main>
         <HeroSection />
@@ -122,15 +117,6 @@ export default function App() {
       </main>
 
       <Footer />
-
-      <AuthModal
-        show={auth.showAuthModal}
-        loading={auth.authLoading}
-        error={auth.authError}
-        onClose={() => auth.setShowAuthModal(false)}
-        onSignIn={auth.signInWithGoogle}
-      />
-
       <ToastContainer
         toasts={toast.toasts}
         onRemove={toast.removeToast}
