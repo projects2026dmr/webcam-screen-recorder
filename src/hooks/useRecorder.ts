@@ -919,13 +919,16 @@ export function useRecorder(): UseRecorderReturn {
     const destination = audioCtx.createMediaStreamDestination();
     audioDestinationRef.current = destination;
 
-    if (screenStreamRef.current) {
-      const screenAudioTracks = screenStreamRef.current.getAudioTracks();
-      if (screenAudioTracks.length > 0) {
-        const screenAudioStream = new MediaStream(screenAudioTracks);
-    const screenSource = audioCtx.createMediaStreamSource(screenAudioStream);
-    screenSource.connect(destination);
+// Connect screen audio if available
+if (screenStreamRef.current) {
+  const screenAudioTracks = screenStreamRef.current.getAudioTracks();
+  if (screenAudioTracks.length > 0) {
+    const screenAudioStream = new MediaStream(screenAudioTracks);
 
+    // ✔ DOĞRU SATIR
+    const screenSource = audioCtx.createMediaStreamSource(screenAudioStream);
+
+    screenSource.connect(destination);
     console.log('[Recorder] Screen audio connected');
   }
 }
