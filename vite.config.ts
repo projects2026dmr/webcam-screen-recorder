@@ -8,7 +8,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig({
-  base: '/webcam-screen-recorder/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
