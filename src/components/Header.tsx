@@ -50,12 +50,6 @@ export default function Header({ user, onSignIn, onSignOut }: HeaderProps) {
                 </button>
               </div>
             ) : (
-              <button
-                onClick={onSignIn}
-                className="px-4 py-2 text-sm font-medium bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-              >
-                Sign In
-              </button>
             )}
           </div>
 
@@ -81,7 +75,6 @@ export default function Header({ user, onSignIn, onSignOut }: HeaderProps) {
               {user ? (
                 <button onClick={onSignOut} className="text-sm text-slate-300 hover:text-white py-2 text-left">Sign Out ({user.name})</button>
               ) : (
-                <button onClick={() => { onSignIn(); setMobileMenuOpen(false); }} className="text-sm text-brand-400 py-2 text-left">Sign In with Google</button>
               )}
             </div>
           </div>
