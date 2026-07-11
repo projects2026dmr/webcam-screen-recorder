@@ -4,17 +4,17 @@ import type { User } from '../hooks/useAuth';
 
 interface HeaderProps {
   user: User | null;
-  onSignIn: () => void;
   onSignOut: () => void;
 }
 
-export default function Header({ user, onSignIn, onSignOut }: HeaderProps) {
+export default function Header({ user, onSignOut }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-slate-700/50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
         <div className="flex items-center justify-between h-16">
+
           {/* Logo */}
           <a href="#" className="flex items-center gap-2 group" aria-label="WebCam & Screen Recorder home">
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -32,7 +32,7 @@ export default function Header({ user, onSignIn, onSignOut }: HeaderProps) {
             <a href="#privacy" className="text-sm text-slate-300 hover:text-white transition-colors">Privacy & Security</a>
             <a href="#faq" className="text-sm text-slate-300 hover:text-white transition-colors">FAQ</a>
             <a href="#recorder" className="text-sm font-medium text-brand-400 hover:text-brand-300 transition-colors">Free Screen Recorder</a>
-            
+
             {user ? (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-700/50">
@@ -49,8 +49,7 @@ export default function Header({ user, onSignIn, onSignOut }: HeaderProps) {
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
-            ) : (
-            )}
+            ) : null}
           </div>
 
           {/* Mobile menu button */}
@@ -72,10 +71,15 @@ export default function Header({ user, onSignIn, onSignOut }: HeaderProps) {
               <a href="#privacy" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-300 hover:text-white py-2">Privacy & Security</a>
               <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-300 hover:text-white py-2">FAQ</a>
               <a href="#recorder" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-brand-400 py-2">Free Screen Recorder</a>
+
               {user ? (
-                <button onClick={onSignOut} className="text-sm text-slate-300 hover:text-white py-2 text-left">Sign Out ({user.name})</button>
-              ) : (
-              )}
+                <button
+                  onClick={onSignOut}
+                  className="text-sm text-slate-300 hover:text-white py-2 text-left"
+                >
+                  Sign Out ({user.name})
+                </button>
+              ) : null}
             </div>
           </div>
         )}
