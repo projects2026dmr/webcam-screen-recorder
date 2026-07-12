@@ -18,6 +18,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { createCompositeTrack } from "./compositeVideoTrack";
 
 // ============================================================
 // TYPES
@@ -929,7 +930,7 @@ if (selectedMode === 'screen') {
     ]);
   }
 } else {
-  // --- WEBKAM / SCREEN+WEBCAM: mevcut canvas yolu ---
+  // --- SCREEN+WEBCAM: Insertable Streams PiP compositing ---
   try {
     const audioCtx = new AudioContext();
     audioContextRef.current = audioCtx;
@@ -937,44 +938,45 @@ if (selectedMode === 'screen') {
     const destination = audioCtx.createMediaStreamDestination();
     audioDestinationRef.current = destination;
 
-    // Connect screen audio if available
+    // Screen audio
     if (screenStreamRef.current) {
       const screenAudioTracks = screenStreamRef.current.getAudioTracks();
       if (screenAudioTracks.length > 0) {
         const screenAudioStream = new MediaStream(screenAudioTracks);
-
         const screenSource = audioCtx.createMediaStreamSource(screenAudioStream);
         screenSource.connect(destination);
-        console.log('[Recorder] Screen audio connected');
+        console.log("[Recorder] Screen audio connected (PiP mode)");
       }
     }
 
+    // Mic audio
     if (micStream) {
       const micSource = audioCtx.createMediaStreamSource(micStream);
       micSource.connect(destination);
-      console.log('[Recorder] Microphone audio connected');
+      console.log("[Recorder] Microphone audio connected (PiP mode)");
     }
 
-const videoTracks: MediaStreamTrack[] = [];
+    // ⭐ Insertable Streams PiP compositing
+    const compositeTrack = await createCompositeTrack(
+      screenStreamRef.current,
+      webcamStreamRef.current
+    );
 
-if (screenStreamRef.current) {
-  videoTracks.push(...screenStreamRef.current.getVideoTracks());
-}
+    finalStream = new MediaStream([
+      compositeTrack,
+      ...destination.stream.getAudioTracks(),
+    ]);
 
-if (webcamStreamRef.current) {
-  videoTracks.push(...webcamStreamRef.current.getVideoTracks());
-}
-
-finalStream = new MediaStream([
-  ...videoTracks,
-  ...destination.stream.getAudioTracks(),
-]);
-    console.log('[Recorder] Final stream tracks:', finalStream.getTracks().length);
+    console.log("[Recorder] Final stream (PiP mode) tracks:", finalStream.getTracks().length);
 
   } catch (audioError) {
-    console.warn('[Recorder] AudioContext setup failed, using fallback:', audioError);
+    console.warn("[Recorder] AudioContext setup failed (PiP mode), using fallback:", audioError);
 
-    const canvasStream = canvas.captureStream(30);
+    // Fallback: sadece screen + mic
+    const videoTracks = screenStreamRef.current
+      ? screenStreamRef.current.getVideoTracks()
+      : [];
+
     const audioTracks: MediaStreamTrack[] = [];
 
     if (screenStreamRef.current) {
@@ -985,7 +987,7 @@ finalStream = new MediaStream([
     }
 
     finalStream = new MediaStream([
-      ...canvasStream.getVideoTracks(),
+      ...videoTracks,
       ...audioTracks,
     ]);
   }
