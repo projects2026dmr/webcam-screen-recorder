@@ -18,6 +18,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { createCompositeTrack } from "./compositeVideoTrack";
 
 // ============================================================
 // TYPES
@@ -975,7 +976,7 @@ if (selectedMode === 'screen') {
     ]);
   }
 } else {
-  // --- SCREEN + WEBCAM (BASİT BİRLEŞTİRME, PIP YOK) ---
+  // --- SCREEN+WEBCAM (Canvas PiP) ---
   try {
     const audioCtx = new AudioContext();
     audioContextRef.current = audioCtx;
@@ -999,21 +1000,19 @@ if (selectedMode === 'screen') {
       micSource.connect(destination);
     }
 
-    // Final stream: screen video + webcam video + mixed audio
-    const videoTracks: MediaStreamTrack[] = [];
-
-    if (screenStreamRef.current) {
-      videoTracks.push(...screenStreamRef.current.getVideoTracks());
-    }
-    if (webcamStreamRef.current) {
-      videoTracks.push(...webcamStreamRef.current.getVideoTracks());
-    }
+    // Tek video track üret (canvas compositing)
+    const compositeTrack = createCompositeTrack(
+      screenStreamRef.current!,
+      webcamStreamRef.current!
+    );
 
     finalStream = new MediaStream([
-      ...videoTracks,
+      compositeTrack,
       ...destination.stream.getAudioTracks(),
     ]);
+
   } catch {
+    // Fallback: sadece ekran + webcam ayrı track (MediaRecorder sadece ekranı kaydeder)
     const videoTracks: MediaStreamTrack[] = [];
 
     if (screenStreamRef.current) {
@@ -1038,6 +1037,7 @@ if (selectedMode === 'screen') {
     ]);
   }
 }
+
 
       // ----------------------------------------
       // STEP 9: Create and Start MediaRecorder
