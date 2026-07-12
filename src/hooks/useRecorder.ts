@@ -871,32 +871,26 @@ let finalStream: MediaStream;
 
 if (selectedMode === 'screen') {
   try {
-    // AudioContext oluştur
     const audioCtx = new AudioContext();
     audioContextRef.current = audioCtx;
 
     const destination = audioCtx.createMediaStreamDestination();
     audioDestinationRef.current = destination;
 
-    // --- SCREEN AUDIO ---
     if (screenStreamRef.current) {
       const screenAudioTracks = screenStreamRef.current.getAudioTracks();
       if (screenAudioTracks.length > 0) {
         const screenAudioStream = new MediaStream(screenAudioTracks);
         const screenSource = audioCtx.createMediaStreamSource(screenAudioStream);
         screenSource.connect(destination);
-        console.log('[Recorder] Screen audio connected');
       }
     }
 
-    // --- MIC AUDIO ---
     if (micStream) {
       const micSource = audioCtx.createMediaStreamSource(micStream);
       micSource.connect(destination);
-      console.log('[Recorder] Microphone audio connected');
     }
 
-    // --- FINAL STREAM (screen video + mixed audio) ---
     const videoTracks = screenStreamRef.current
       ? screenStreamRef.current.getVideoTracks()
       : [];
@@ -906,11 +900,7 @@ if (selectedMode === 'screen') {
       ...destination.stream.getAudioTracks(),
     ]);
 
-    console.log('[Recorder] Final stream (screen mode) tracks:', finalStream.getTracks().length);
-
   } catch (audioError) {
-    console.warn('[Recorder] AudioContext setup failed (screen mode), using fallback:', audioError);
-
     const videoTracks = screenStreamRef.current
       ? screenStreamRef.current.getVideoTracks()
       : [];
@@ -938,25 +928,20 @@ if (selectedMode === 'screen') {
     const destination = audioCtx.createMediaStreamDestination();
     audioDestinationRef.current = destination;
 
-    // Screen audio
     if (screenStreamRef.current) {
       const screenAudioTracks = screenStreamRef.current.getAudioTracks();
       if (screenAudioTracks.length > 0) {
         const screenAudioStream = new MediaStream(screenAudioTracks);
         const screenSource = audioCtx.createMediaStreamSource(screenAudioStream);
         screenSource.connect(destination);
-        console.log("[Recorder] Screen audio connected (PiP mode)");
       }
     }
 
-    // Mic audio
     if (micStream) {
       const micSource = audioCtx.createMediaStreamSource(micStream);
       micSource.connect(destination);
-      console.log("[Recorder] Microphone audio connected (PiP mode)");
     }
 
-    // ⭐ Insertable Streams PiP compositing
     const compositeTrack = await createCompositeTrack(
       screenStreamRef.current,
       webcamStreamRef.current
@@ -967,12 +952,7 @@ if (selectedMode === 'screen') {
       ...destination.stream.getAudioTracks(),
     ]);
 
-    console.log("[Recorder] Final stream (PiP mode) tracks:", finalStream.getTracks().length);
-
   } catch (audioError) {
-    console.warn("[Recorder] AudioContext setup failed (PiP mode), using fallback:", audioError);
-
-    // Fallback: sadece screen + mic
     const videoTracks = screenStreamRef.current
       ? screenStreamRef.current.getVideoTracks()
       : [];
