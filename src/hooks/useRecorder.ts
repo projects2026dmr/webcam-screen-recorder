@@ -955,11 +955,20 @@ if (selectedMode === 'screen') {
       console.log('[Recorder] Microphone audio connected');
     }
 
-    const canvasStream = canvas.captureStream(30);
-    finalStream = new MediaStream([
-      ...canvasStream.getVideoTracks(),
-      ...destination.stream.getAudioTracks(),
-    ]);
+const videoTracks: MediaStreamTrack[] = [];
+
+if (screenStreamRef.current) {
+  videoTracks.push(...screenStreamRef.current.getVideoTracks());
+}
+
+if (webcamStreamRef.current) {
+  videoTracks.push(...webcamStreamRef.current.getVideoTracks());
+}
+
+finalStream = new MediaStream([
+  ...videoTracks,
+  ...destination.stream.getAudioTracks(),
+]);
     console.log('[Recorder] Final stream tracks:', finalStream.getTracks().length);
 
   } catch (audioError) {
