@@ -21,13 +21,16 @@ export function createCompositeTrack(
   const compositeStream = canvas.captureStream(30);
   const compositeTrack = compositeStream.getVideoTracks()[0];
 
-  // Ekran ve webcam video elementleri
+  // Ekran video elementini oluştur
   const screenVideo = document.createElement("video");
   screenVideo.srcObject = new MediaStream([screenTrack]);
+  screenVideo.muted = true;
   screenVideo.play();
 
+  // Webcam video elementini oluştur
   const webcamVideo = document.createElement("video");
   webcamVideo.srcObject = new MediaStream([webcamTrack]);
+  webcamVideo.muted = true;
   webcamVideo.play();
 
   // PiP boyutu ve pozisyonu
