@@ -18,7 +18,6 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { createCompositeTrack } from "./compositeVideoTrack";
 
 // ============================================================
 // TYPES
@@ -976,7 +975,7 @@ if (selectedMode === 'screen') {
     ]);
   }
 } else {
-  // --- SCREEN+WEBCAM (Canvas PiP) ---
+  // --- SCREEN + WEBCAM (BASİT BİRLEŞTİRME, PIP YOK) ---
   try {
     const audioCtx = new AudioContext();
     audioContextRef.current = audioCtx;
@@ -1000,19 +999,21 @@ if (selectedMode === 'screen') {
       micSource.connect(destination);
     }
 
-    // Tek video track üret (canvas compositing)
-    const compositeTrack = createCompositeTrack(
-      screenStreamRef.current!,
-      webcamStreamRef.current!
-    );
+    // Final stream: screen video + webcam video + mixed audio
+    const videoTracks: MediaStreamTrack[] = [];
+
+    if (screenStreamRef.current) {
+      videoTracks.push(...screenStreamRef.current.getVideoTracks());
+    }
+    if (webcamStreamRef.current) {
+      videoTracks.push(...webcamStreamRef.current.getVideoTracks());
+    }
 
     finalStream = new MediaStream([
-      compositeTrack,
+      ...videoTracks,
       ...destination.stream.getAudioTracks(),
     ]);
-
   } catch {
-    // Fallback: sadece ekran + webcam ayrı track (MediaRecorder sadece ekranı kaydeder)
     const videoTracks: MediaStreamTrack[] = [];
 
     if (screenStreamRef.current) {
