@@ -878,7 +878,6 @@ if (selectedMode === 'screen') {
     const destination = audioCtx.createMediaStreamDestination();
     audioDestinationRef.current = destination;
 
-    // Screen audio
     if (screenStreamRef.current) {
       const screenAudioTracks = screenStreamRef.current.getAudioTracks();
       if (screenAudioTracks.length > 0) {
@@ -888,13 +887,11 @@ if (selectedMode === 'screen') {
       }
     }
 
-    // Mic audio
     if (micStream) {
       const micSource = audioCtx.createMediaStreamSource(micStream);
       micSource.connect(destination);
     }
 
-    // Final stream: screen video + mixed audio
     const videoTracks = screenStreamRef.current
       ? screenStreamRef.current.getVideoTracks()
       : [];
@@ -903,7 +900,8 @@ if (selectedMode === 'screen') {
       ...videoTracks,
       ...destination.stream.getAudioTracks(),
     ]);
-  } catch (audioError) {
+
+  } catch {
     const videoTracks = screenStreamRef.current
       ? screenStreamRef.current.getVideoTracks()
       : [];
@@ -914,7 +912,7 @@ if (selectedMode === 'screen') {
       audioTracks.push(...screenStreamRef.current.getAudioTracks());
     }
     if (micStream) {
-      audioTracks.push(...(micStream?.getAudioTracks() || []));
+      audioTracks.push(...micStream.getAudioTracks());
     }
 
     finalStream = new MediaStream([
@@ -931,7 +929,6 @@ if (selectedMode === 'screen') {
     const destination = audioCtx.createMediaStreamDestination();
     audioDestinationRef.current = destination;
 
-    // Webcam audio (varsa)
     if (webcamStreamRef.current) {
       const webcamAudioTracks = webcamStreamRef.current.getAudioTracks();
       if (webcamAudioTracks.length > 0) {
@@ -941,13 +938,11 @@ if (selectedMode === 'screen') {
       }
     }
 
-    // Mic audio
     if (micStream) {
       const micSource = audioCtx.createMediaStreamSource(micStream);
       micSource.connect(destination);
     }
 
-    // Final stream: webcam video + mixed audio
     const videoTracks = webcamStreamRef.current
       ? webcamStreamRef.current.getVideoTracks()
       : [];
@@ -956,7 +951,8 @@ if (selectedMode === 'screen') {
       ...videoTracks,
       ...destination.stream.getAudioTracks(),
     ]);
-  } catch (audioError) {
+
+  } catch {
     const videoTracks = webcamStreamRef.current
       ? webcamStreamRef.current.getVideoTracks()
       : [];
@@ -967,7 +963,7 @@ if (selectedMode === 'screen') {
       audioTracks.push(...webcamStreamRef.current.getAudioTracks());
     }
     if (micStream) {
-      audioTracks.push(...(micStream?.getAudioTracks() || []));
+      audioTracks.push(...micStream.getAudioTracks());
     }
 
     finalStream = new MediaStream([
@@ -976,7 +972,7 @@ if (selectedMode === 'screen') {
     ]);
   }
 } else {
-  // --- SCREEN+WEBCAM: Insertable Streams PiP compositing ---
+  // --- SCREEN+WEBCAM ---
   try {
     const audioCtx = new AudioContext();
     audioContextRef.current = audioCtx;
@@ -984,7 +980,6 @@ if (selectedMode === 'screen') {
     const destination = audioCtx.createMediaStreamDestination();
     audioDestinationRef.current = destination;
 
-    // Screen audio
     if (screenStreamRef.current) {
       const screenAudioTracks = screenStreamRef.current.getAudioTracks();
       if (screenAudioTracks.length > 0) {
@@ -994,13 +989,12 @@ if (selectedMode === 'screen') {
       }
     }
 
-    // Mic audio
     if (micStream) {
       const micSource = audioCtx.createMediaStreamSource(micStream);
       micSource.connect(destination);
     }
 
-    // PiP compositing: screen + webcam → single video track
+    // Try PiP compositing
     const compositeTrack = await createCompositeTrack(
       screenStreamRef.current!,
       webcamStreamRef.current!
@@ -1010,12 +1004,15 @@ if (selectedMode === 'screen') {
       compositeTrack,
       ...destination.stream.getAudioTracks(),
     ]);
-  } catch (audioError) {
+
+  } catch {
+    // Fallback: screen + webcam (no PiP)
     const videoTracks: MediaStreamTrack[] = [];
 
     if (screenStreamRef.current) {
       videoTracks.push(...screenStreamRef.current.getVideoTracks());
     }
+
     if (webcamStreamRef.current) {
       videoTracks.push(...webcamStreamRef.current.getVideoTracks());
     }
@@ -1025,8 +1022,9 @@ if (selectedMode === 'screen') {
     if (screenStreamRef.current) {
       audioTracks.push(...screenStreamRef.current.getAudioTracks());
     }
+
     if (micStream) {
-      audioTracks.push(...(micStream?.getAudioTracks() || []));
+      audioTracks.push(...micStream.getAudioTracks());
     }
 
     finalStream = new MediaStream([
@@ -1035,6 +1033,7 @@ if (selectedMode === 'screen') {
     ]);
   }
 }
+
       // ----------------------------------------
       // STEP 9: Create and Start MediaRecorder
       // ----------------------------------------
