@@ -975,7 +975,7 @@ if (selectedMode === 'screen') {
     ]);
   }
 } else {
-  // --- SCREEN + WEBCAM (BASİT BİRLEŞTİRME, PIP YOK) ---
+  // --- SCREEN + WEBCAM ---
   try {
     const audioCtx = new AudioContext();
     audioContextRef.current = audioCtx;
@@ -999,28 +999,33 @@ if (selectedMode === 'screen') {
       micSource.connect(destination);
     }
 
-    // Final stream: screen video + webcam video + mixed audio
+    // ⭐ VIDEO TRACK ORDER FIX ⭐
     const videoTracks: MediaStreamTrack[] = [];
 
-    if (screenStreamRef.current) {
-      videoTracks.push(...screenStreamRef.current.getVideoTracks());
-    }
+    // 1) WEBCAM FIRST → MediaRecorder will record this one
     if (webcamStreamRef.current) {
       videoTracks.push(...webcamStreamRef.current.getVideoTracks());
+    }
+
+    // 2) SCREEN SECOND → ignored by MediaRecorder but drawn on canvas
+    if (screenStreamRef.current) {
+      videoTracks.push(...screenStreamRef.current.getVideoTracks());
     }
 
     finalStream = new MediaStream([
       ...videoTracks,
       ...destination.stream.getAudioTracks(),
     ]);
+
   } catch {
     const videoTracks: MediaStreamTrack[] = [];
 
-    if (screenStreamRef.current) {
-      videoTracks.push(...screenStreamRef.current.getVideoTracks());
-    }
     if (webcamStreamRef.current) {
       videoTracks.push(...webcamStreamRef.current.getVideoTracks());
+    }
+
+    if (screenStreamRef.current) {
+      videoTracks.push(...screenStreamRef.current.getVideoTracks());
     }
 
     const audioTracks: MediaStreamTrack[] = [];
@@ -1028,6 +1033,7 @@ if (selectedMode === 'screen') {
     if (screenStreamRef.current) {
       audioTracks.push(...screenStreamRef.current.getAudioTracks());
     }
+
     if (micStream) {
       audioTracks.push(...micStream.getAudioTracks());
     }
@@ -1038,7 +1044,6 @@ if (selectedMode === 'screen') {
     ]);
   }
 }
-
 
       // ----------------------------------------
       // STEP 9: Create and Start MediaRecorder
