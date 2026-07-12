@@ -870,6 +870,7 @@ export function useRecorder(): UseRecorderReturn {
 let finalStream: MediaStream;
 
 if (selectedMode === 'screen') {
+  // --- SCREEN ONLY ---
   try {
     const audioCtx = new AudioContext();
     audioContextRef.current = audioCtx;
@@ -877,6 +878,7 @@ if (selectedMode === 'screen') {
     const destination = audioCtx.createMediaStreamDestination();
     audioDestinationRef.current = destination;
 
+    // Screen audio
     if (screenStreamRef.current) {
       const screenAudioTracks = screenStreamRef.current.getAudioTracks();
       if (screenAudioTracks.length > 0) {
@@ -886,11 +888,13 @@ if (selectedMode === 'screen') {
       }
     }
 
+    // Mic audio
     if (micStream) {
       const micSource = audioCtx.createMediaStreamSource(micStream);
       micSource.connect(destination);
     }
 
+    // Final stream: screen video + mixed audio
     const videoTracks = screenStreamRef.current
       ? screenStreamRef.current.getVideoTracks()
       : [];
@@ -899,7 +903,6 @@ if (selectedMode === 'screen') {
       ...videoTracks,
       ...destination.stream.getAudioTracks(),
     ]);
-
   } catch (audioError) {
     const videoTracks = screenStreamRef.current
       ? screenStreamRef.current.getVideoTracks()
@@ -919,6 +922,59 @@ if (selectedMode === 'screen') {
       ...audioTracks,
     ]);
   }
+} else if (selectedMode === 'webcam') {
+  // --- WEBCAM ONLY ---
+  try {
+    const audioCtx = new AudioContext();
+    audioContextRef.current = audioCtx;
+
+    const destination = audioCtx.createMediaStreamDestination();
+    audioDestinationRef.current = destination;
+
+    // Webcam audio (varsa)
+    if (webcamStreamRef.current) {
+      const webcamAudioTracks = webcamStreamRef.current.getAudioTracks();
+      if (webcamAudioTracks.length > 0) {
+        const webcamAudioStream = new MediaStream(webcamAudioTracks);
+        const webcamSource = audioCtx.createMediaStreamSource(webcamAudioStream);
+        webcamSource.connect(destination);
+      }
+    }
+
+    // Mic audio
+    if (micStream) {
+      const micSource = audioCtx.createMediaStreamSource(micStream);
+      micSource.connect(destination);
+    }
+
+    // Final stream: webcam video + mixed audio
+    const videoTracks = webcamStreamRef.current
+      ? webcamStreamRef.current.getVideoTracks()
+      : [];
+
+    finalStream = new MediaStream([
+      ...videoTracks,
+      ...destination.stream.getAudioTracks(),
+    ]);
+  } catch (audioError) {
+    const videoTracks = webcamStreamRef.current
+      ? webcamStreamRef.current.getVideoTracks()
+      : [];
+
+    const audioTracks: MediaStreamTrack[] = [];
+
+    if (webcamStreamRef.current) {
+      audioTracks.push(...webcamStreamRef.current.getAudioTracks());
+    }
+    if (micStream) {
+      audioTracks.push(...(micStream?.getAudioTracks() || []));
+    }
+
+    finalStream = new MediaStream([
+      ...videoTracks,
+      ...audioTracks,
+    ]);
+  }
 } else {
   // --- SCREEN+WEBCAM: Insertable Streams PiP compositing ---
   try {
@@ -928,6 +984,7 @@ if (selectedMode === 'screen') {
     const destination = audioCtx.createMediaStreamDestination();
     audioDestinationRef.current = destination;
 
+    // Screen audio
     if (screenStreamRef.current) {
       const screenAudioTracks = screenStreamRef.current.getAudioTracks();
       if (screenAudioTracks.length > 0) {
@@ -937,25 +994,31 @@ if (selectedMode === 'screen') {
       }
     }
 
+    // Mic audio
     if (micStream) {
       const micSource = audioCtx.createMediaStreamSource(micStream);
       micSource.connect(destination);
     }
 
+    // PiP compositing: screen + webcam → single video track
     const compositeTrack = await createCompositeTrack(
-      screenStreamRef.current,
-      webcamStreamRef.current
+      screenStreamRef.current!,
+      webcamStreamRef.current!
     );
 
     finalStream = new MediaStream([
       compositeTrack,
       ...destination.stream.getAudioTracks(),
     ]);
-
   } catch (audioError) {
-    const videoTracks = screenStreamRef.current
-      ? screenStreamRef.current.getVideoTracks()
-      : [];
+    const videoTracks: MediaStreamTrack[] = [];
+
+    if (screenStreamRef.current) {
+      videoTracks.push(...screenStreamRef.current.getVideoTracks());
+    }
+    if (webcamStreamRef.current) {
+      videoTracks.push(...webcamStreamRef.current.getVideoTracks());
+    }
 
     const audioTracks: MediaStreamTrack[] = [];
 
